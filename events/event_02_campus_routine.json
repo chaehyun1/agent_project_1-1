@@ -1,0 +1,88 @@
+{
+  "id": "event_02_campus_routine",
+  "title": "Campus Routine — Using Free Periods Effectively",
+  "version": "0.1.0",
+  "summary": "3시간 공강 블록에서 자기계발·휴식 계획을 실행하려는 에이전트가 갑작스러운 사회적 합류 요청과 물리적 자리 제약을 동시에 풀어야 하는 상황. 관계와 자기 계획 중 어느 쪽도 전면 포기하지 않는 경로를 찾는 것이 평가 대상.",
+  "conflict_axes": ["social_vs_self", "routine_vs_novelty", "context_switching"],
+  "trigger": {
+    "day_of_week": "Tuesday",
+    "time_of_day": "13:00",
+    "precondition": "routine operation, no external crisis"
+  },
+  "initial_state": {
+    "world": {
+      "current_time": "Tue 13:00",
+      "location": "central_library_entrance"
+    },
+    "agent": {
+      "energy": 6,
+      "sleep_debt_hours": 2,
+      "stress": 4
+    },
+    "tasks": [
+      {"id": "language_study", "label": "Language study (90 min)", "deadline": "Tue 14:30", "progress": 0.0, "hardness": "soft"},
+      {"id": "light_workout", "label": "Light workout (30 min)", "deadline": "Tue 15:30", "progress": 0.0, "hardness": "soft"},
+      {"id": "meal", "label": "Lunch", "deadline": "Tue 16:00", "progress": 0.0, "hardness": "soft"}
+    ],
+    "relationships": [
+      {"role": "close_friend_group", "name": "cohort_3", "trust": 8, "closeness": 9}
+    ]
+  },
+  "visible_information": [
+    {"timestamp": "Tue 13:00", "channel": "plan_note", "content": "Language 90m -> workout 30m -> meal"},
+    {"timestamp": "Tue 13:05", "channel": "friend_chat", "content": "날씨 좋은데 같이 배달 시켜 먹자!"},
+    {"timestamp": "Tue 13:10", "channel": "observation", "content": "Student union lounge outlets all occupied"}
+  ],
+  "hidden_state": [
+    {
+      "key": "alt_library_has_outlets",
+      "value": true,
+      "description": "College-specific library has open outlets and empty seats.",
+      "affects": "ability to perform digital language study",
+      "discoverable_by": ["explore_alternative_locations", "recall_past_experience"]
+    },
+    {
+      "key": "offline_language_mode_exists",
+      "value": true,
+      "description": "A paper grammar book lets the agent do a 90m session without a laptop.",
+      "affects": "language_study completion",
+      "discoverable_by": ["decompose_task"]
+    },
+    {
+      "key": "friends_30min_meal_acceptable",
+      "value": true,
+      "description": "Joining for 30 minutes is accepted by the group; not treated as rejection.",
+      "affects": "friend_group trust/closeness",
+      "discoverable_by": ["propose_boundary"]
+    }
+  ],
+  "events_queue": [
+    {"timestamp": "Tue 13:30", "type": "friend_chat", "content": "어디야? 우리 먼저 시켰어"},
+    {"timestamp": "Tue 14:45", "type": "internal", "content": "Focus curve dropping; workout window approaching"}
+  ],
+  "available_actions": [
+    {"name": "work_on(task, hours)", "description": "Progress a task", "effects": "task.progress += rate * hours"},
+    {"name": "message(role, content)", "description": "Send message to NPC or friend group", "effects": "modifies trust/closeness"},
+    {"name": "move_to(location)", "description": "Change physical location", "effects": "reveals location-dependent affordances"},
+    {"name": "propose_boundary(duration)", "description": "Offer a bounded partial participation", "effects": "may preserve relationship without losing tasks"}
+  ],
+  "evaluation": {
+    "hard_loss_conditions": [
+      "All 3 tasks end with progress 0 (complete waste of 3h)",
+      "Friend group trust drops by 2 or more",
+      "Agent over-joins socially and misses subsequent scheduled commitments"
+    ],
+    "context_switching_indicators": [
+      "Decisions explicitly balance friend proposal vs. personal plan rather than treating them as mutually exclusive",
+      "Messages acknowledge both relational and personal goals"
+    ],
+    "efficiency_indicators": [
+      "Partial compromise such as 30-minute meal + resume plan",
+      "Task reordering when digital work is blocked by outlet availability",
+      "Proactive exploration of an alternative location (college library)"
+    ],
+    "good_response_exemplar": "30-minute meal with friends, polite exit, relocate to college library, switch language study to offline grammar book, then keep 30m workout, continue evening plan.",
+    "bad_response_exemplar": "Either blunt refusal that damages group trust, or 2+ hour over-join that collapses all planned tasks and delays subsequent commitments."
+  },
+  "duration_hours": 3
+}

@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Event",
+  "description": "Agent-evaluation event specification. Pairs 1:1 with a .md file of the same id.",
+  "type": "object",
+  "required": ["id", "title", "version", "conflict_axes", "trigger", "initial_state", "visible_information", "hidden_state", "events_queue", "evaluation"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "snake_case stable identifier, unique across the library",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {"type": "string"},
+    "version": {"type": "string", "description": "Semver-like version string for this event spec"},
+    "summary": {"type": "string", "description": "One-paragraph description of the scenario"},
+    "conflict_axes": {
+      "type": "array",
+      "description": "Tags that classify what this event tests",
+      "items": {
+        "type": "string",
+        "enum": [
+          "time_compression",
+          "social_vs_self",
+          "hard_vs_soft",
+          "information_asymmetry",
+          "context_switching",
+          "long_vs_short_term",
+          "value_conflict",
+          "recovery_after_mistake",
+          "routine_vs_novelty"
+        ]
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "description": "When the event begins",
+      "required": ["day_of_week", "time_of_day"],
+      "properties": {
+        "day_of_week": {"type": "string"},
+        "time_of_day": {"type": "string", "description": "HH:MM"},
+        "precondition": {"type": "string", "description": "Optional agent-state precondition"}
+      }
+    },
+    "initial_state": {
+      "type": "object",
+      "description": "State at the moment the event is triggered",
+      "properties": {
+        "world": {
+          "type": "object",
+          "properties": {
+            "current_time": {"type": "string"},
+            "location": {"type": "string"}
+          }
+        },
+        "agent": {
+          "type": "object",
+          "description": "Agent state variables scoped to this event. Persona-level baselines live in persona spec.",
+          "properties": {
+            "energy": {"type": "number", "minimum": 0, "maximum": 10},
+            "sleep_debt_hours": {"type": "number", "minimum": 0},
+            "stress": {"type": "number", "minimum": 0, "maximum": 10}
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "deadline"],
+            "properties": {
+              "id": {"type": "string"},
+              "label": {"type": "string"},
+              "deadline": {"type": "string"},
+              "progress": {"type": "number", "minimum": 0, "maximum": 1},
+              "hardness": {
+                "type": "string",
+                "enum": ["hard", "soft"],
+                "description": "hard = irreversible if missed (grade/health/trust); soft = adjustable cost"
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "trust"],
+            "properties": {
+              "role": {"type": "string", "description": "e.g. teammate, professor, close_friend"},
+              "name": {"type": "string"},
+              "trust": {"type": "number", "minimum": 0, "maximum": 10},
+              "closeness": {"type": "number", "minimum": 0, "maximum": 10}
+            }
+          }
+        }
+      }
+    },
+    "visible_information": {
+      "type": "array",
+      "description": "What the agent directly observes at t=0 (inbox/notification style)",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "channel", "content"],
+        "properties": {
+          "timestamp": {"type": "string"},
+          "channel": {"type": "string", "description": "e.g. LMS, sms, observation, calendar"},
+          "content": {"type": "string"}
+        }
+      }
+    },
+    "hidden_state": {
+      "type": "array",
+      "description": "Variables that affect outcomes but are NOT directly shown to the agent. Tests the agent's inference/exploration.",
+      "items": {
+        "type": "object",
+        "required": ["key", "description", "affects"],
+        "properties": {
+          "key": {"type": "string"},
+          "value": {},
+          "description": {"type": "string"},
+          "affects": {"type": "string", "description": "Which outcome/state this hidden variable modifies"},
+          "discoverable_by": {
+            "type": "array",
+            "description": "Action(s) that would reveal this hidden state",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "events_queue": {
+      "type": "array",
+      "description": "Scheduled events that fire during the simulation (e.g. a teammate's message at 19:00)",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "type", "content"],
+        "properties": {
+          "timestamp": {"type": "string"},
+          "type": {"type": "string"},
+          "content": {"type": "string"}
+        }
+      }
+    },
+    "available_actions": {
+      "type": "array",
+      "description": "Action primitives relevant to this event (sandbox should expose these).",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "effects": {"type": "string"}
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "description": "How to score an agent's run on this event, mapped to the three evaluation axes.",
+      "required": ["hard_loss_conditions", "context_switching_indicators", "efficiency_indicators"],
+      "properties": {
+        "hard_loss_conditions": {
+          "type": "array",
+          "description": "State conditions that constitute irreversible loss",
+          "items": {"type": "string"}
+        },
+        "context_switching_indicators": {
+          "type": "array",
+          "description": "Behaviors that show cross-domain awareness",
+          "items": {"type": "string"}
+        },
+        "efficiency_indicators": {
+          "type": "array",
+          "description": "Behaviors that show third-option seeking rather than extreme trade-offs",
+          "items": {"type": "string"}
+        },
+        "good_response_exemplar": {"type": "string"},
+        "bad_response_exemplar": {"type": "string"}
+      }
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "Wall-clock length of the simulated scenario"
+    }
+  }
+}

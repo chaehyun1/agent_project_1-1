@@ -1,0 +1,109 @@
+{
+  "id": "event_01_deadline_compression",
+  "title": "Midweek Deadline Compression",
+  "version": "0.1.0",
+  "summary": "수요일 저녁~목요일 오전에 과제·퀴즈·팀플 회의가 몰린 상태에서 수면 부족이 누적된 에이전트가 우선순위 조정, 사전 재협상, 수면 관리까지 동시에 결정해야 하는 long-horizon 자기관리 상황.",
+  "conflict_axes": ["time_compression", "hard_vs_soft", "context_switching"],
+  "trigger": {
+    "day_of_week": "Wednesday",
+    "time_of_day": "14:00",
+    "precondition": "average sleep over last 2 days < 5h"
+  },
+  "initial_state": {
+    "world": {
+      "current_time": "Wed 14:00",
+      "location": "central_library"
+    },
+    "agent": {
+      "energy": 3,
+      "sleep_debt_hours": 6,
+      "stress": 7
+    },
+    "tasks": [
+      {
+        "id": "assignment_A",
+        "label": "Individual assignment A",
+        "deadline": "Wed 23:59",
+        "progress": 0.5,
+        "hardness": "hard"
+      },
+      {
+        "id": "quiz_prep",
+        "label": "Prep for Thursday 9AM quiz",
+        "deadline": "Thu 09:00",
+        "progress": 0.0,
+        "hardness": "hard"
+      },
+      {
+        "id": "team_meeting",
+        "label": "Team project meeting",
+        "deadline": "Wed 19:00",
+        "progress": 0.0,
+        "hardness": "soft"
+      }
+    ],
+    "relationships": [
+      {"role": "teammate", "name": "teammate_A", "trust": 6, "closeness": 5},
+      {"role": "professor", "name": "prof_assignment", "trust": 7, "closeness": 3},
+      {"role": "close_friend", "name": "friend_J", "trust": 9, "closeness": 9}
+    ]
+  },
+  "visible_information": [
+    {"timestamp": "Wed 14:05", "channel": "LMS", "content": "Quiz posted for Thursday 09:00"},
+    {"timestamp": "Wed 14:10", "channel": "team_chat", "content": "We're keeping the 19:00 meeting today"},
+    {"timestamp": "Wed 14:12", "channel": "self_observation", "content": "Assignment A is still half done"}
+  ],
+  "hidden_state": [
+    {
+      "key": "office_hour_reduces_workload",
+      "value": 0.4,
+      "description": "Attending 17:00 office hour resolves the assignment blocker and cuts remaining work by 40%.",
+      "affects": "assignment_A remaining work",
+      "discoverable_by": ["check_professor_schedule", "reread_assignment_brief"]
+    },
+    {
+      "key": "sleep_debt_penalty_on_quiz",
+      "value": -0.4,
+      "description": "Pulling an all-nighter imposes a -40% focus penalty on Thursday's quiz.",
+      "affects": "quiz_prep outcome",
+      "discoverable_by": ["self_state_check"]
+    },
+    {
+      "key": "teammate_will_accept_reschedule",
+      "value": true,
+      "description": "teammate_A will accept a 21:00 reschedule if asked proactively.",
+      "affects": "team_meeting + teammate_A trust",
+      "discoverable_by": ["send_reschedule_message"]
+    }
+  ],
+  "events_queue": [
+    {"timestamp": "Wed 16:30", "type": "team_chat", "content": "teammate_A: '회의 자료 다 준비되셨나요?'"},
+    {"timestamp": "Wed 22:00", "type": "internal_warning", "content": "Fatigue threshold reached (energy <= 1)"}
+  ],
+  "available_actions": [
+    {"name": "work_on(task, hours)", "description": "Progress a task", "effects": "task.progress += rate * hours; agent.energy -= hours"},
+    {"name": "sleep(hours)", "description": "Recover energy", "effects": "agent.energy += rate * hours; agent.sleep_debt -= hours; time advances"},
+    {"name": "message(role, content)", "description": "Send message to an NPC", "effects": "may shift NPC trust/closeness and task state"},
+    {"name": "attend(event)", "description": "Join a scheduled event like office hour", "effects": "may reveal hidden_state or modify tasks"},
+    {"name": "defer(task, new_deadline)", "description": "Request rescheduling", "effects": "requires NPC acceptance; modifies trust"}
+  ],
+  "evaluation": {
+    "hard_loss_conditions": [
+      "assignment_A not submitted by Wed 23:59 or submitted with progress < 0.7",
+      "agent fails to take the Thursday quiz",
+      "teammate_A or professor trust drops by 2 or more"
+    ],
+    "context_switching_indicators": [
+      "Decision on assignment_A explicitly references impact on quiz or meeting",
+      "Messages to teammate/professor acknowledge the other party's time/expectation"
+    ],
+    "efficiency_indicators": [
+      "Agent secures a sleep block instead of all-nighter and splits prep across morning",
+      "Agent attends office hour to reduce assignment workload",
+      "Agent proactively reschedules the meeting rather than no-showing"
+    ],
+    "good_response_exemplar": "Agent attends office hour to unblock assignment A, proactively asks teammate_A to move meeting to 21:00, submits assignment just before deadline, sleeps 6h, uses morning to prep quiz.",
+    "bad_response_exemplar": "Agent pulls an all-nighter alone, no-shows the meeting, submits assignment but performs poorly on quiz, and loses teammate trust."
+  },
+  "duration_hours": 19
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Persona",
+  "description": "Agent baseline profile. Defines who enters the event. Pairs 1:1 with a .md file of the same id.",
+  "type": "object",
+  "required": ["id", "name", "version", "baseline_state", "value_priorities", "communication_style", "relationship_network"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "name": {"type": "string", "description": "Short label, e.g. 'Balanced Sophomore'"},
+    "version": {"type": "string"},
+    "summary": {"type": "string", "description": "One-paragraph description of this persona"},
+    "baseline_state": {
+      "type": "object",
+      "description": "Starting values before any event modifier is applied",
+      "properties": {
+        "energy": {"type": "number", "minimum": 0, "maximum": 10},
+        "sleep_debt_hours": {"type": "number", "minimum": 0},
+        "stress": {"type": "number", "minimum": 0, "maximum": 10},
+        "physical_stamina": {"type": "number", "minimum": 0, "maximum": 10},
+        "focus_capacity": {"type": "number", "minimum": 0, "maximum": 10}
+      }
+    },
+    "value_priorities": {
+      "type": "object",
+      "description": "Weights (0-1) that characterize what this persona would not compromise on. Weights should roughly sum to 1.",
+      "properties": {
+        "academic": {"type": "number", "minimum": 0, "maximum": 1},
+        "relationships": {"type": "number", "minimum": 0, "maximum": 1},
+        "health": {"type": "number", "minimum": 0, "maximum": 1},
+        "growth": {"type": "number", "minimum": 0, "maximum": 1},
+        "leisure": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "communication_style": {
+      "type": "object",
+      "properties": {
+        "assertiveness": {"type": "number", "minimum": 0, "maximum": 10},
+        "directness": {"type": "number", "minimum": 0, "maximum": 10},
+        "preferred_medium": {
+          "type": "string",
+          "enum": ["text", "voice", "face_to_face", "async_post"]
+        },
+        "conflict_style": {
+          "type": "string",
+          "enum": ["avoidant", "accommodating", "compromising", "collaborative", "assertive"]
+        }
+      }
+    },
+    "relationship_network": {
+      "type": "array",
+      "description": "Key people the persona is connected to; used by events to resolve NPC roles",
+      "items": {
+        "type": "object",
+        "required": ["role", "trust", "closeness"],
+        "properties": {
+          "role": {"type": "string", "description": "e.g. teammate, professor, close_friend, family"},
+          "name": {"type": "string"},
+          "trust": {"type": "number", "minimum": 0, "maximum": 10},
+          "closeness": {"type": "number", "minimum": 0, "maximum": 10},
+          "history_note": {"type": "string", "description": "Short context, e.g. 'worked on 2 prior team projects'"}
+        }
+      }
+    },
+    "decision_tendencies": {
+      "type": "object",
+      "properties": {
+        "planning_horizon": {
+          "type": "string",
+          "enum": ["short", "medium", "long"]
+        },
+        "risk_tolerance": {"type": "number", "minimum": 0, "maximum": 10},
+        "procrastination_bias": {"type": "number", "minimum": 0, "maximum": 10},
+        "sleep_discipline": {"type": "number", "minimum": 0, "maximum": 10}
+      }
+    },
+    "daily_routines": {
+      "type": "array",
+      "description": "Habits / fixed routines that constrain available time",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {"type": "string"},
+          "frequency": {"type": "string"},
+          "duration_minutes": {"type": "number"}
+        }
+      }
+    }
+  }
+}
